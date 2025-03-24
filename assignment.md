@@ -1,6 +1,8 @@
 # Python packaging workshop
 25.03.2025
 
+Authors: Rens Holmer, Laura Patino Medina, Elena Del Pup, Zijiang Yang
+
 ## Assignment 1: python package management with uv
 In this assignment we will initialize a new python project using [uv](https://docs.astral.sh/uv/). Some of the things uv will do for us: structure/configure `pyproject.toml`, add/remove dependencies, manage python versions and virtual environments, run linters and tests, publish to pypi.
 
@@ -78,7 +80,7 @@ In addition, make sure to update your `__init__.py`!
 # Goes in __init__.py
 from .add import add
 
-__all__ = ['add']l
+__all__ = ['add']
 ```
 ### Step 4
 
@@ -186,7 +188,240 @@ And that will be available as `cli` from the commandline once you've pip-install
 
 ## Assignment 2: Publishing a package to conda
 
-## Assignment 3: Miscellaneous tips and tricks with github
+
+## Assignment 3: Release Automation, Versioning & Sharing: Best Practices with GitHub
+
+### 3.1 Consistent versioning via UV dynamic versioning 
+
+#### Step 1 - Add a version to your project 
+
+Update your `pyproject.toml` with this or confirm it is already present: 
+
+```{sh}
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "semver"
+```
+
+#### Step 2 – Make a release  
+
+To produce a clean, PyPI-compatible version (e.g. `0.1.0`) for publishing, you need to tag the current commit:
+
+```{sh}
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Verify that you're on the tag:
+
+```{sh}
+git describe --tags --exact-match
+```
+
+If this returns v0.1.0, you're good to go. If it returns nothing, you're not on the tagged commit (you may need to re-tag or checkout the correct one).
+
+#### Step 3 – Build again 
+
+```{sh}
+uv build
+```
+
+If you have had previous build attempts, make sure to remove previous build files with `rm -rf dist/` and then rebuild. 
+
+After building, the generated wheel in `dist/` will have a clean version: `new_project-0.1.0-py3-none-any.whl`
+
+#### Step 4 - Publish on pypi 
+
+Run: 
+
+```{sh}
+uv publish 
+```
+
+When prompted:
+
+- Username: `__token__`
+- Password: paste your PyPI API token (created at https://pypi.org/manage/account/token/)
+
+Visit: `https://pypi.org/project/<your-package-name>` or for this example project at: https://pypi.org/project/package-publishing-example/
+
+You can now install the latest version of your package with: 
+
+```{sh}
+pip install <your-package-name>==0.1.0
+```
+
+
+### 3.2 Release-driven packaging to trigger pypi/conda package builds 
+
+#### Step 1 - Add a GitHub Actions workflow for PyPI publishing
+
+Create a file at `.github/workflows/publish.yml`:
+
+```{sh}
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Needed for trusted publishing
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build the package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+```
+💡 This setup uses Trusted Publishing — no token needed if your project is configured with PyPI.
+
+If you're using API tokens instead, you can modify the last step:
+
+```{sh}
+      - name: Publish to PyPI (token-based)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+```
+
+In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Secrets and variables → Actions.
+
+#### Step 2 - Tag a release to trigger the workflow
+
+1. Push your latest commit to `main`
+2. Create a GitHub Release:
+   - Go to "Releases" → "Draft a new release"
+   - Tag version (e.g. v0.1.1)
+   - Add release notes
+   - Click "Publish release"
+3. GitHub will:
+   - Trigger the workflow
+   - Build the package using UV
+   - Upload it to PyPI automatically!
+
+#### Step 3 - Add Conda auto-recipe 
+
+If you're using Grayskull, you can automate Conda packaging with GitHub Actions. 
+
+### 3.3 Publishing code with a DOI via Zenodo 
+
+In this assignment, you will make your code citable by linking your GitHub repository to Zenodo, which will automatically archive your code and assign a DOI (Digital Object Identifier) every time you publish a GitHub release.
+
+#### Step 1 – Link your GitHub repo to Zenodo
+
+1. Go to: https://zenodo.org/account/settings/github/
+2. Log in via GitHub
+2. Under "GitHub repositories", toggle ON your workshop repo
+3. Done! Now every GitHub release will be archived by Zenodo and a DOI will be assigned 
+
+#### Step 2 – Make a release on GitHub
+
+Just like in Assignment 3.2:
+
+```{sh}
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Or use the GitHub interface:
+- Go to "Releases" → "Draft a new release"
+- Select the tag (e.g. v0.1.3)
+- Write a short changelog
+- Click Publish
+
+Zenodo will:
+- Archive this specific snapshot
+- Assign a unique DOI
+- Group releases under a concept DOI (one DOI that always points to the latest version)
+
+#### Step 3 – Add a DOI badge to your README
+
+Once Zenodo finishes archiving (usually within a minute), go to your Zenodo record and:
+
+1. Scroll to the "Cite as" section
+2. Click "Get badge"
+3. Copy the Markdown badge from your Zenodo deposit page and paste it in `README.md`:
+
+```{sh}
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
+```
+
+### 3.4 Deploying and hosting your documentation on GitHub Pages 
+
+#### Step 1 - Create a `docs/` folder and a `README.md` 
+
+Create a minimal structure for static Markdown-based documentation:
+
+```{sh}
+mkdir docs
+echo "# Welcome to My Project Docs" > docs/index.md
+```
+
+Alternatively, use a tool like `mkdocs` or `sphinx` for nicer styling. 
+
+#### Step 2 – Add a GitHub Actions workflow to deploy docs
+
+Create the workflow file: `.github/workflows/docs.yml`: 
+
+```{sh}
+name: Deploy Docs
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload static content
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: docs/
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
+```
+
+This workflow will upload and deploy the contents of docs/ every time you push to main.
+
+#### Step 3 – Enable GitHub Pages in your repo settings
+
+Go to Settings → Pages, choose the workflow, and save.
+
+Your documentation should now be published at
+`https://<username>.github.io/<repository>/`. 
+
+Check the documentation for this repository at: 
+
+## Assignment 4: Miscellaneous tips and tricks with github 
 
 ### github action for CI/CD
 #### step 1 
