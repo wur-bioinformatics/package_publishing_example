@@ -375,20 +375,20 @@ Once Zenodo finishes archiving (usually within a minute), go to your Zenodo reco
 
 #### Step 1 - Create a `docs/` folder and a `README.md` 
 
-Minimal setup:
+Create a minimal structure for static Markdown-based documentation:
 
 ```{sh}
-docs/
-├── index.md
+mkdir docs
+echo "# Welcome to My Project Docs" > docs/index.md
 ```
 
-
-Alternatively, use a tool like `mkdocs` or `sphinx`. 
+Alternatively, use a tool like `mkdocs` or `sphinx` for nicer styling. 
 
 #### Step 2 – Add a GitHub Actions workflow to deploy docs
 
+Create the workflow file: `.github/workflows/docs.yml`: 
+
 ```{sh}
-# .github/workflows/docs.yml
 name: Deploy Docs
 
 on:
@@ -410,12 +410,16 @@ jobs:
         uses: actions/deploy-pages@v2
 ```
 
+This workflow will upload and deploy the contents of docs/ every time you push to main.
+
 #### Step 3 – Enable GitHub Pages in your repo settings
 
 Go to Settings → Pages, choose the workflow, and save.
 
 Your documentation should now be published at
 `https://<username>.github.io/<repository>/`. 
+
+Check the documentation for this repository at: 
 
 ## Assignment 4: Miscellaneous tips and tricks with github 
 
