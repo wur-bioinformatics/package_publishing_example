@@ -20,6 +20,23 @@ class InvalidIUPACError(Exception):
   pass
 
 def comp(letter: str) -> str:
+  """
+  Somewhat 'safe' version of using the IUPAC lookup table.
+
+  Examples:
+    >>> comp('A')
+    'T'
+
+    >>> comp('N')
+    'N'
+  
+  Args:
+    letter (str): 1 letter nucleotide string which will be complemented with the IUPAC lookup table
+
+  Returns:
+    str: complemented nucleotide allowing for IUPAC degeneracies
+  """
+  assert len(letter) == 1, f'Length of input must be 1, got {len(letter)}'
   try:
     return IUPAC_REVERSE_COMPLEMENT[letter]
   except ValueError:
