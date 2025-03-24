@@ -195,88 +195,93 @@ Setting up a github action workflow. Create a `.github/workflows` Directory:
 mkdir -p .github/workflows
 ```
 #### step 2
-Define the workflow file. Create a yaml file (e.g. ci-cd.yaml) within the workflows directory to define the CI/CD pipeline.
+Define the CI/CD workflow file by creating a yaml file (e.g. ci-cd.yaml) within the workflows directory.
 ```{yaml}
 name: CI/CD Pipeline
 
+# Trigger the workflow on push or pull request to the main branch, and when a new version tag is pushed.
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  push:
     tags:
       - 'v*'
-```
-The workflow is triggered on push/pull requests to the main branch, and when a new version tag (starting with "v") is pushed.
-```{yaml}
+  pull_request:
+    branches: [main]
+
+# Define the jobs that run in the workflow.
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9, 3.10, 3,11]
-```
-The build-and-test job runs on Ubuntu and uses a matrix strategy to test package across multiple python versions (3.9, 3.10, 3.11 in this case).
-```{yaml}
+
     steps:
       - name: Checkout code
-      uses: actions/checkout@v3
+        uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-        python-verson: ${{ matrix.python-version }}
+          python-version: '3.10'
 
       - name: Build package
         run: |
           python -m pip install --upgrade pip
-          pip install build
-          python -m build
+          pip install -e .
 
       - name: Run tests
         run: |
           pip install pytest
           pytest
 ```
-The above steps include:
-- **Checkout code:** clone the repository to the runner.
-- **Set up Python:** configure python environment based on versions in the matrix.
-- **Build package:** build the package using the pyproject.toml file.
-- **Run tests:** install pytest and runs the test.
+
 ### github container registry (GHCR)
 #### step 1
 Define the dockerfile named `Dockerfile` for your repository.
 ```dockerfile
-# Use an official Python runtime as a parent image.
-FROM python:3.9-slim
+# Use an official Python runtime (python3.10 in this case) as a parent image.
+FROM python:3.10-slim
 
 # Prevent Python from buffering stdout and stderr.
 ENV PYTHONUNBUFFERED=1
+# Disable uv-dynamic-versioning to avoid Git dependency during build.
+ENV UV_DYNAMIC_VERSIONING_DISABLE=1
 
 # Set the working directory in the container.
 WORKDIR /app
 
 # Copy the project files into the container.
-# Adjust file paths as necessary for your repository structure.
 COPY pyproject.toml .
-COPY package_publishing_example/ ./package_publishing_example/
+COPY src/ ./src/
+COPY tests/ ./tests/
+COPY README.md .
 
-# Upgrade pip and install build tool.
-RUN pip install --upgrade pip
-RUN pip install build
+# Update apt and install Git (if needed for your build backend)
+RUN apt-get update && \
+    apt-get install -y git && \
+    rm -rf /var/lib/apt/lists/*
 
-# Build the package (creates wheel and sdist in the dist/ folder).
+# Modify pyproject.toml:
+# 1. Replace the dynamic version setting with a static version.
+# 2. Remove the [tool.uv-dynamic-versioning] section without removing the following header.
+RUN sed -i.bak 's/dynamic = \["version"\]/version = "0.1.0"/' pyproject.toml && \
+    rm pyproject.toml.bak && \
+    awk 'BEGIN {skip=0} \
+         /^\[tool\.uv-dynamic-versioning\]/{skip=1; next} \
+         /^\[/{skip=0} \
+         {if (!skip) print}' pyproject.toml > pyproject.tmp && \
+    mv pyproject.tmp pyproject.toml
+
+# Upgrade pip and install the build tool.
+RUN pip install --upgrade pip && \
+    pip install build
+
+# Build the package (creates wheel and sdist in the dist/ folder)
 RUN python -m build
-
-# Install the package from the built wheel.
-RUN pip install $(ls dist/*.whl)
-
-# Optionally, run tests here if you have a test suite.
-# RUN pip install pytest && pytest
+# Install the built package.
+RUN pip install dist/*.whl
+# Run pytest.
+RUN pip install pytest && pytest
 
 # Define the default command to verify installation.
-# Replace with your application's start command if needed.
 CMD ["python", "-c", "import package_publishing_example; print('Package installed successfully!')"]
 ```
 #### step 2
@@ -295,7 +300,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
@@ -311,10 +316,10 @@ jobs:
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/my-python-project:latest
 ```
+
 This workflow triggers on pushes that create tags starting with "v" (e.g. v1.0.0).
 Steps include:
 - **Checkout code:** Pulls your repository into the runner.
 - **Log in to GHCR:** Authenticates to GHCR using your github token.
 - **Build Docker image:** Uses the Dockerfile in your repository to build the image.
 - **Push Docker image:** Pushes the built image to GHCR.
-
