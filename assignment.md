@@ -419,7 +419,7 @@ Go to Settings → Pages, choose the workflow, and save.
 Your documentation should now be published at
 `https://<username>.github.io/<repository>/`. 
 
-Check the documentation for this repository at: 
+Check the documentation for this repository at: https://wur-bioinformatics.github.io/package_publishing_example/
 
 ## Assignment 4: Miscellaneous tips and tricks with github 
 
