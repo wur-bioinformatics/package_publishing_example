@@ -186,21 +186,22 @@ And that will be available as `cli` from the commandline once you've pip-install
 
 ## Assignment 2: Publishing a package to conda
 
+Objectives of this aasignment
+
+✔️ Familiarize with conda recipes.  
+✔️ Use Grayskull to generate a Bioconda recipe.  
+✔️ Build and test the package locally.  
+✔️ Be aware that submission to Bioconda requires further preparation.
+
 In this second assignment we will work on automatically generating a conda recipe from a PyPI package, using Grayskull.
 To publish a Bioconda package is neccessary to set a GitHub repository and a conda recipe, the latter outlines the steps needed to build a package from source code.
 
-Objectives of this aasignment
 
-✔️ Familiarize with conda recipes.
-✔️ Use Grayskull to generate a Bioconda recipe.
-✔️ Build and test the package locally.
-✔️ Be aware that submission to Bioconda requires further preparation. 
+### Step 0
+
+We will use an existing Python project from GitHub, if successfully completed the repository and the pypi package was set up on the first assignment of the workshop.
 
 ### Step 1
-
-We will use an existing Python project from GitHub, ideally the repository and the pypi package was set up on the first assignment of the workshop, if successfully completed.
-
-### Step 2
 Install [Grayskull](https://github.com/conda/grayskull)
 
 
@@ -209,7 +210,7 @@ Install [Grayskull](https://github.com/conda/grayskull)
 pip install grayskull
 ```
 
-### Step 3
+### Step 2
 
 Run Gray skull to automatically generate a conda recipe from a python package.
 
@@ -223,40 +224,17 @@ grayskull pypi new_project
 grayskull pypi package_publishing_example 
 ```
 
-License type: MIT
-License file: ['LICENSE']
-Build requirements:
-  <none>
-Host requirements:
-  - python >=3.10
-  - hatchling
-  - uv-dynamic-versioning
-  - pip
-Run requirements:
-  - python >=3.10
-  - pytest >=8.3.5
-  - ruff >=0.11.0
-  - typer >=0.15.2
-  - uv-dynamic-versioning >=0.6.0
-
-RED: Package names not available on conda-forge
-YELLOW: PEP-725 PURLs that did not map to known package
-GREEN: Packages available on conda-forge
-Using default recipe maintainer: AddYourGitHubIdHere
-
-Maintainers:
-   - AddYourGitHubIdHere
-#### Recipe generated on /home/patin005/workshop/package_publishing_example for package_publishing_example ###
-
 This command will create a new folder called 'new_project'. Inside, you will find the meta.yaml file, containing the metadata neccessary to create a conda package.
 
+If it works you should see this message once grayskull is done:
+#### Recipe generated on /home/username/package_publishing_example for package_publishing_example ###
 
 ```python
 new_project/
 ├── meta.yaml #Main recipe file, contains the build, test information
 ```
 
-### Step 4
+### Step 3
 
 After automatically generating the conda recipe you can edit the meta.yaml file. If you did not use Grayskull, you will need to manually write the script. 
 
@@ -317,7 +295,7 @@ extra:
 
 
 
-### Step 5
+### Step 4
 
 When building a Bioconda package, conda-build reads the metadata or the conda recipe and creates a conda package containing all the files in the build environment and the specified build dependencies. If recipe includes tests it also tests the new conda package. 
 
@@ -326,7 +304,7 @@ When building a Bioconda package, conda-build reads the metadata or the conda re
 conda install -y conda-build
 ```
 
-### Step 6
+### Step 5
 We will now build the package locally, for this we will use conda build, , run this command from the root folder (of your username). [Conda build](https://conda.org/blog/2023-05-18-how-to-use-conda-build/)
 
 
@@ -342,14 +320,14 @@ If build was successful, Conda will generate a package file in the conda-bld dir
 conda build new_project --output
 ```
 
-???? THIS STEP IS NOT WORKING
+???? THIS STEP IS NOT WORKING. I get this message:
 ```
 Could not solve for environment specs
 The following package could not be installed
 └─ uv-dynamic-versioning =* * does not exist (perhaps a typo or a missing channel).
 ```
 
-### Step 7
+### Step 6
 
 Once the package has been built, you can test it. Create a conda environmet and install your built package.
 
