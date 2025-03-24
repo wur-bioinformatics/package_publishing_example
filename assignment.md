@@ -229,7 +229,7 @@ The build-and-test job runs on Ubuntu and uses a matrix strategy to test package
         python-verson: ${{ matrix.python-version }}
 
       - name: Build package
-        runs: |
+        run: |
           python -m pip install --upgrade pip
           pip install build
           python -m build
@@ -304,7 +304,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        runs: |
+        run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/my-python-project:latest .
 
       - name: Push Docker image
