@@ -188,373 +188,176 @@ And that will be available as `cli` from the commandline once you've pip-install
 
 ## Assignment 2: Publishing a package to conda
 
+Objectives of this aasignment
 
-## Assignment 3: Release Automation, Versioning & Sharing: Best Practices with GitHub
+✔️ Familiarize with conda recipes.  
+✔️ Use Grayskull to generate a Bioconda recipe.  
+✔️ Build and test the package locally.  
+✔️ Be aware that submission to Bioconda requires further preparation.
 
-### 3.1 Consistent versioning via UV dynamic versioning 
+In this second assignment we will work on automatically generating a conda recipe from a PyPI package, using Grayskull.
+To publish a Bioconda package is neccessary to set a GitHub repository and a conda recipe, the latter outlines the steps needed to build a package from source code.
 
-#### Step 1 - Add a version to your project 
 
-Update your `pyproject.toml` with this or confirm it is already present: 
+### Step 0
 
-```{sh}
-[tool.uv-dynamic-versioning]
-vcs = "git"
-style = "semver"
+We will use an existing Python project from GitHub, if successfully completed the repository and the pypi package was set up on the first assignment of the workshop.
+
+### Step 1
+Install [Grayskull](https://github.com/conda/grayskull)
+
+
+
+```python
+pip install grayskull
 ```
 
-#### Step 2 – Make a release  
+### Step 2
 
-To produce a clean, PyPI-compatible version (e.g. `0.1.0`) for publishing, you need to tag the current commit:
+Run Gray skull to automatically generate a conda recipe from a python package.
 
-```{sh}
-git tag v0.1.0
-git push origin v0.1.0
-```
 
-Verify that you're on the tag:
-
-```{sh}
-git describe --tags --exact-match
-```
-
-If this returns v0.1.0, you're good to go. If it returns nothing, you're not on the tagged commit (you may need to re-tag or checkout the correct one).
-
-#### Step 3 – Build again 
-
-```{sh}
-uv build
-```
-
-If you have had previous build attempts, make sure to remove previous build files with `rm -rf dist/` and then rebuild. 
-
-After building, the generated wheel in `dist/` will have a clean version: `new_project-0.1.0-py3-none-any.whl`
-
-#### Step 4 - Publish on pypi 
-
-Run: 
-
-```{sh}
-uv publish 
-```
-
-When prompted:
-
-- Username: `__token__`
-- Password: paste your PyPI API token (created at https://pypi.org/manage/account/token/)
-
-Visit: `https://pypi.org/project/<your-package-name>` or for this example project at: https://pypi.org/project/package-publishing-example/
-
-You can now install the latest version of your package with: 
-
-```{sh}
-pip install <your-package-name>==0.1.0
+```python
+grayskull pypi new_project
 ```
 
 
-### 3.2 Release-driven packaging to trigger pypi/conda package builds 
-
-#### Step 1 - Add a GitHub Actions workflow for PyPI publishing
-
-Create a file at `.github/workflows/publish.yml`:
-
-```{sh}
-name: Publish to PyPI
-
-on:
-  release:
-    types: [published]
-
-jobs:
-  build-and-publish:
-    name: Build and publish to PyPI
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write  # Needed for trusted publishing
-      contents: read
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Build the package
-        run: uv build
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          skip-existing: true
-
-```
-💡 This setup uses Trusted Publishing — no token needed if your project is configured with PyPI.
-
-If you're using API tokens instead, you can modify the last step:
-
-```{sh}
-      - name: Publish to PyPI (token-based)
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
-
+```python
+grayskull pypi package_publishing_example 
 ```
 
-In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Secrets and variables → Actions.
+This command will create a new folder called 'new_project'. Inside, you will find the meta.yaml file, containing the metadata neccessary to create a conda package.
 
-#### Step 2 - Tag a release to trigger the workflow
+If it works you should see this message once grayskull is done:
+#### Recipe generated on /home/username/package_publishing_example for package_publishing_example ###
 
-1. Push your latest commit to `main`
-2. Create a GitHub Release:
-   - Go to "Releases" → "Draft a new release"
-   - Tag version (e.g. v0.1.1)
-   - Add release notes
-   - Click "Publish release"
-3. GitHub will:
-   - Trigger the workflow
-   - Build the package using UV
-   - Upload it to PyPI automatically!
-
-#### Step 3 - Add Conda auto-recipe 
-
-If you're using Grayskull, you can automate Conda packaging with GitHub Actions. 
-
-### 3.3 Publishing code with a DOI via Zenodo 
-
-In this assignment, you will make your code citable by linking your GitHub repository to Zenodo, which will automatically archive your code and assign a DOI (Digital Object Identifier) every time you publish a GitHub release.
-
-#### Step 1 – Link your GitHub repo to Zenodo
-
-1. Go to: https://zenodo.org/account/settings/github/
-2. Log in via GitHub
-2. Under "GitHub repositories", toggle ON your workshop repo
-3. Done! Now every GitHub release will be archived by Zenodo and a DOI will be assigned 
-
-#### Step 2 – Make a release on GitHub
-
-Just like in Assignment 3.2:
-
-```{sh}
-git tag v0.1.0
-git push origin v0.1.0
+```python
+new_project/
+├── meta.yaml #Main recipe file, contains the build, test information
 ```
 
-Or use the GitHub interface:
-- Go to "Releases" → "Draft a new release"
-- Select the tag (e.g. v0.1.3)
-- Write a short changelog
-- Click Publish
+### Step 3
 
-Zenodo will:
-- Archive this specific snapshot
-- Assign a unique DOI
-- Group releases under a concept DOI (one DOI that always points to the latest version)
+After automatically generating the conda recipe you can edit the meta.yaml file. If you did not use Grayskull, you will need to manually write the script. 
 
-#### Step 3 – Add a DOI badge to your README
+For the example Pypi package named "package_publishing_example", the following meta.yaml is generated by Grayskull:
 
-Once Zenodo finishes archiving (usually within a minute), go to your Zenodo record and:
 
-1. Scroll to the "Cite as" section
-2. Click "Get badge"
-3. Copy the Markdown badge from your Zenodo deposit page and paste it in `README.md`:
+```python
+{% set name = "package_publishing_example" %}
+{% set version = "0.0.4" %}
 
-```{sh}
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
+  sha256: dd5ffdb8db6e6f2ba05546f230abc53ee897497d4eb81a1808fbe6290a07bf6f
+
+build:
+  entry_points:
+    - ppe = package_publishing_example.cli:cli
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.10
+    - hatchling
+    - uv-dynamic-versioning
+    - pip
+  run:
+    - python >=3.10
+    - pytest >=8.3.5
+    - ruff >=0.11.0
+    - typer >=0.15.2
+    - uv-dynamic-versioning >=0.6.0
+
+test:
+  imports:
+    - package_publishing_example
+  commands:
+    - pip check
+    - ppe --help
+  requires:
+    - pip
+
+about:
+  home: 
+  summary: Add your description here
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - AddYourGitHubIdHere
 ```
 
-### 3.4 Deploying and hosting your documentation on GitHub Pages 
 
-#### Step 1 - Create a `docs/` folder and a `README.md` 
 
-Create a minimal structure for static Markdown-based documentation:
+### Step 4
 
-```{sh}
-mkdir docs
-echo "# Welcome to My Project Docs" > docs/index.md
+When building a Bioconda package, conda-build reads the metadata or the conda recipe and creates a conda package containing all the files in the build environment and the specified build dependencies. If recipe includes tests it also tests the new conda package. 
+
+
+```python
+conda install -y conda-build
 ```
 
-Alternatively, use a tool like `mkdocs` or `sphinx` for nicer styling. 
+### Step 5
+We will now build the package locally, for this we will use conda build, , run this command from the root folder (of your username). [Conda build](https://conda.org/blog/2023-05-18-how-to-use-conda-build/)
 
-#### Step 2 – Add a GitHub Actions workflow to deploy docs
 
-Create the workflow file: `.github/workflows/docs.yml`: 
 
-```{sh}
-name: Deploy Docs
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Upload static content
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: docs/
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+```python
+conda build new_project
 ```
 
-This workflow will upload and deploy the contents of docs/ every time you push to main.
+If build was successful, Conda will generate a package file in the conda-bld directory. To locate this file, you can use this command from the terminal:
 
-#### Step 3 – Enable GitHub Pages in your repo settings
 
-Go to Settings → Pages, choose the workflow, and save.
-
-Your documentation should now be published at
-`https://<username>.github.io/<repository>/`. 
-
-Check the documentation for this repository at: https://wur-bioinformatics.github.io/package_publishing_example/
-
-## Assignment 4: Miscellaneous tips and tricks with github 
-
-### github action for CI/CD
-#### step 1 
-Setting up a github action workflow. Create a `.github/workflows` Directory:
-```{sh}
-mkdir -p .github/workflows
-```
-#### step 2
-Define the CI/CD workflow file by creating a yaml file (e.g. ci-cd.yaml) within the workflows directory.
-```{yaml}
-name: CI/CD Pipeline
-
-# Trigger the workflow on push or pull request to the main branch, and when a new version tag is pushed.
-on:
-  push:
-    branches: [main]
-    tags:
-      - 'v*'
-  pull_request:
-    branches: [main]
-
-# Define the jobs that run in the workflow.
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Build package
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-
-      - name: Run tests
-        run: |
-          pip install pytest
-          pytest
+```python
+conda build new_project --output
 ```
 
-### github container registry (GHCR)
-#### step 1
-Define the dockerfile named `Dockerfile` for your repository.
-```dockerfile
-# Use an official Python runtime (python3.10 in this case) as a parent image.
-FROM python:3.10-slim
-
-# Prevent Python from buffering stdout and stderr.
-ENV PYTHONUNBUFFERED=1
-# Disable uv-dynamic-versioning to avoid Git dependency during build.
-ENV UV_DYNAMIC_VERSIONING_DISABLE=1
-
-# Set the working directory in the container.
-WORKDIR /app
-
-# Copy the project files into the container.
-COPY pyproject.toml .
-COPY src/ ./src/
-COPY tests/ ./tests/
-COPY README.md .
-
-# Update apt and install Git (if needed for your build backend)
-RUN apt-get update && \
-    apt-get install -y git && \
-    rm -rf /var/lib/apt/lists/*
-
-# Modify pyproject.toml:
-# 1. Replace the dynamic version setting with a static version.
-# 2. Remove the [tool.uv-dynamic-versioning] section without removing the following header.
-RUN sed -i.bak 's/dynamic = \["version"\]/version = "0.1.0"/' pyproject.toml && \
-    rm pyproject.toml.bak && \
-    awk 'BEGIN {skip=0} \
-         /^\[tool\.uv-dynamic-versioning\]/{skip=1; next} \
-         /^\[/{skip=0} \
-         {if (!skip) print}' pyproject.toml > pyproject.tmp && \
-    mv pyproject.tmp pyproject.toml
-
-# Upgrade pip and install the build tool.
-RUN pip install --upgrade pip && \
-    pip install build
-
-# Build the package (creates wheel and sdist in the dist/ folder)
-RUN python -m build
-# Install the built package.
-RUN pip install dist/*.whl
-# Run pytest.
-RUN pip install pytest && pytest
-
-# Define the default command to verify installation.
-CMD ["python", "-c", "import package_publishing_example; print('Package installed successfully!')"]
+???? THIS STEP IS NOT WORKING. I get this message:
 ```
-#### step 2
-Define another workflow yaml file for containerize and publish (e.g. container-publish.yaml).
-```{yaml}
-name: Docker build and publish
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  containerize:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/my-python-project:latest .
-
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/my-python-project:latest
+Could not solve for environment specs
+The following package could not be installed
+└─ uv-dynamic-versioning =* * does not exist (perhaps a typo or a missing channel).
 ```
 
-This workflow triggers on pushes that create tags starting with "v" (e.g. v1.0.0).
-Steps include:
-- **Checkout code:** Pulls your repository into the runner.
-- **Log in to GHCR:** Authenticates to GHCR using your github token.
-- **Build Docker image:** Uses the Dockerfile in your repository to build the image.
-- **Push Docker image:** Pushes the built image to GHCR.
+### Step 6
+
+Once the package has been built, you can test it. Create a conda environmet and install your built package.
+
+
+```python
+conda create -n test_environment
+conda activate test_env
+conda install --use-local new_project
+conda activate test_environment
+new_project --help
+```
+
+If it was successfully built and tested, the package is ready for submission to Bioconda. Importantly, the packages that are published in Bioconda are strictly reviewed before is accepted.
+
+### Step 7 (Do not run it in this workshop)
+
+Finally, once you have build a conda package ideally you will submit a request to pubish your package. This step cannot be performed for the example python package created in this workshop, however is still explained with the purpose of showing the publishing process.
+
+To upload your package to [Anaconda](https://anaconda.org/):
+
+
+```python
+anaconda upload /path/to/my_package-1.0-0.tar.bz2
+```
+
+Using Grayskull and conda-build to create and manage a pypi package simplifies and automatizes the process of distribution and installation. 
+
+
+
+
+## Assignment 3: Miscellaneous tips and tricks with github

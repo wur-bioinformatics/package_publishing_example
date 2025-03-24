@@ -1,0 +1,48 @@
+{% set name = "package_publishing_example" %}
+{% set version = "0.0.4" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
+  sha256: dd5ffdb8db6e6f2ba05546f230abc53ee897497d4eb81a1808fbe6290a07bf6f
+
+build:
+  entry_points:
+    - ppe = package_publishing_example.cli:cli
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.10
+    - hatchling
+    - uv-dynamic-versioning
+    - pip
+  run:
+    - python >=3.10
+    - pytest >=8.3.5
+    - ruff >=0.11.0
+    - typer >=0.15.2
+    - uv-dynamic-versioning >=0.6.0
+
+test:
+  imports:
+    - package_publishing_example
+  commands:
+    - pip check
+    - ppe --help
+  requires:
+    - pip
+
+about:
+  summary: Add your description here
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - AddYourGitHubIdHere
