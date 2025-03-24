@@ -104,7 +104,11 @@ Note that we had to specify explicitly that we wanted pytest to run doctests. If
 
 ```{toml}
 [pytest]
+<<<<<<< HEAD
 addopts = "--doctest-modules"
+=======
+addopts = '--doctest-modules'
+>>>>>>> dbf25e3 (pytest typo)
 ```
 
 This way pytest always runs with the doctest option enabled, so the command for running tests would simplify to `uv run pytest`. 
