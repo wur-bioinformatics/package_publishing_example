@@ -189,41 +189,146 @@ And that will be available as `cli` from the commandline once you've pip-install
 ## Assignment 2: Publishing a package to conda
 
 
-## Assignment 3: Miscellaneous tips and tricks with github Pt. 1 
+## Assignment 3: Release Automation, Versioning & Sharing: Best Practices with GitHub
 
 ### 3.1 Consistent versioning via UV dynamic versioning 
 
 #### Step 1 - Add a version to your project 
 
-Update your `pyproject.toml` with a version:
+Update your `pyproject.toml` with this or confirm it is already present: 
 
 ```{sh}
-[project]
-name = "new_project"
-version = "0.1.0"
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "semver"
 ```
 
-Optional: Define the version inside your code too (e.g., in `__init__.py`):
+#### Step 2 – Make a release  
 
-```{sh}
-__version__ = "0.1.0"
-```
-
-#### Step 2 – Tag your release on GitHub
-From the command line:
+To produce a clean, PyPI-compatible version (e.g. `0.1.0`) for publishing, you need to tag the current commit:
 
 ```{sh}
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Alternatively, create a Release via the GitHub web interface and upload the release notes.
+Verify that you're on the tag:
+
+```{sh}
+git describe --tags --exact-match
+```
+
+If this returns v0.1.0, you're good to go. If it returns nothing, you're not on the tagged commit (you may need to re-tag or checkout the correct one).
+
+#### Step 3 – Build again 
+
+```{sh}
+uv build
+```
+
+If you have had previous build attempts, make sure to remove previous build files with `rm -rf dist/` and then rebuild. 
+
+After building, the generated wheel in `dist/` will have a clean version: `new_project-0.1.0-py3-none-any.whl`
+
+#### Step 4 - Publish on pypi 
+
+Run: 
+
+```{sh}
+uv publish 
+```
+
+When prompted:
+
+- Username: `__token__`
+- Password: paste your PyPI API token (created at https://pypi.org/manage/account/token/)
+
+Visit: `https://pypi.org/project/<your-package-name>` or for this example project at: https://pypi.org/project/package-publishing-example/
+
+You can now install the latest version of your package with: 
+
+```{sh}
+pip install <your-package-name>==0.1.0
+```
 
 
 ### 3.2 Release-driven packaging to trigger pypi/conda package builds 
 
-### 3.3 Publishing code with a DOI via Zenodo 
+#### Step 1 - Add a GitHub Actions workflow for PyPI publishing
 
+Create a file at `.github/workflows/publish.yml`:
+
+```{sh}
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Needed for trusted publishing
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build the package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+```
+💡 This setup uses Trusted Publishing — no token needed if your project is configured with PyPI.
+
+If you're using API tokens instead, you can modify the last step:
+
+```{sh}
+      - name: Publish to PyPI (token-based)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+```
+
+In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Secrets and variables → Actions.
+
+#### Step 2 - Tag a release to trigger the workflow
+
+1. Push your latest commit to `main`
+2. Create a GitHub Release:
+   - Go to "Releases" → "Draft a new release"
+   - Tag version (e.g. v0.1.1)
+   - Add release notes
+   - Click "Publish release"
+3. GitHub will:
+   - Trigger the workflow
+   - Build the package using UV
+   - Upload it to PyPI automatically!
+
+#### Step 3 - Add Conda auto-recipe 
+
+If you're using Grayskull, you can automate Conda packaging with GitHub Actions. 
+
+### 3.3 Publishing code with a DOI via Zenodo 
 
 #### Step 1 – Link your GitHub repo to Zenodo
 
@@ -292,7 +397,7 @@ Go to Settings → Pages, choose the workflow, and save.
 Your documentation should now be published at
 `https://<username>.github.io/<repository>/`. 
 
-## Assignment 4: Miscellaneous tips and tricks with github Pt. 2 
+## Assignment 4: Miscellaneous tips and tricks with github 
 
 ### github action for CI/CD
 #### step 1 
