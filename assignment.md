@@ -330,28 +330,48 @@ If you're using Grayskull, you can automate Conda packaging with GitHub Actions.
 
 ### 3.3 Publishing code with a DOI via Zenodo 
 
+In this assignment, you will make your code citable by linking your GitHub repository to Zenodo, which will automatically archive your code and assign a DOI (Digital Object Identifier) every time you publish a GitHub release.
+
 #### Step 1 – Link your GitHub repo to Zenodo
 
-Go to: https://zenodo.org/account/settings/github/
+1. Go to: https://zenodo.org/account/settings/github/
+2. Log in via GitHub
+2. Under "GitHub repositories", toggle ON your workshop repo
+3. Done! Now every GitHub release will be archived by Zenodo and a DOI will be assigned 
 
-Log in via GitHub
+#### Step 2 – Make a release on GitHub
 
-Toggle your repo ON
+Just like in Assignment 3.2:
 
-Zenodo will now archive every GitHub release
+```{sh}
+git tag v0.1.0
+git push origin v0.1.0
+```
 
-Step 2 – Make a release on GitHub
-Once your release is live, Zenodo will archive it and assign a DOI.
+Or use the GitHub interface:
+- Go to "Releases" → "Draft a new release"
+- Select the tag (e.g. v0.1.3)
+- Write a short changelog
+- Click Publish
 
-Step 3 – Add a badge to your README
+Zenodo will:
+- Archive this specific snapshot
+- Assign a unique DOI
+- Group releases under a concept DOI (one DOI that always points to the latest version)
 
-Copy the Markdown badge from your Zenodo deposit page and paste it in `README.md`:
+#### Step 3 – Add a DOI badge to your README
+
+Once Zenodo finishes archiving (usually within a minute), go to your Zenodo record and:
+
+1. Scroll to the "Cite as" section
+2. Click "Get badge"
+3. Copy the Markdown badge from your Zenodo deposit page and paste it in `README.md`:
 
 ```{sh}
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 ```
 
-### 3.4 Deploying and hosing your documentation on GitHub Pages 
+### 3.4 Deploying and hosting your documentation on GitHub Pages 
 
 #### Step 1 - Create a `docs/` folder and a `README.md` 
 
