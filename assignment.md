@@ -249,6 +249,7 @@ package:
   version: {{ version }}
 
 source:
+-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
 +  url: https://pypi.org/packages/source/{{ name }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
   sha256: dd5ffdb8db6e6f2ba05546f230abc53ee897497d4eb81a1808fbe6290a07bf6f
 
@@ -304,12 +305,17 @@ cd /path/to/bioconda-recipes
 bioconda-utils build --packages package_publishing_example
 ```
 
+### Step 6
+
 If build was successful, conda will generate a package file in the conda-bld directory.
 To locate this file, you can use this command from the terminal:
 
-### Step 6
+```bash
+TODO
+```
 
-Once the package has been built, you can test it. Create a conda environment and install your built package.
+Once the package has been built, you can test it.
+Create a conda environment and install your built package.
 
 ```bash
 mamba create -n test_package_publishing_example --use-local test_package_publishing_example
