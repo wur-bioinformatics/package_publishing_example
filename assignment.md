@@ -311,7 +311,57 @@ If you're using API tokens instead, you can modify the last step:
 
 In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Secrets and variables → Actions.
 
-#### Step 2 - Tag a release to trigger the workflow
+#### Step 2 - Add Conda packaging workflow  
+
+If you're using Grayskull, you can automate Conda packaging with GitHub Actions. This workflow reuses the `meta.yaml` file you generated with Grayskull.
+
+Create a file:
+`.github/workflows/conda-publish.yml`
+
+```{sh}
+name: Conda Package Build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  conda-build:
+    name: Build Conda Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          miniconda-version: "latest"
+          activate-environment: build-env
+
+      - name: Install build tools
+        run: |
+          conda install -y conda-build pip
+          pip install grayskull
+
+      - name: Generate Conda recipe with Grayskull
+        run: |
+          grayskull pypi package_publishing_example
+
+      - name: Build Conda package
+        run: |
+          conda build package_publishing_example/
+
+      - name: Show output location
+        run: conda build package_publishing_example/ --output
+
+```
+
+💡 You may want to replace `package_publishing_example` with the real name of your package folder or make it dynamic later using ${{ github.event.release.tag_name }}.
+
+#### Step 3 - Tag a release to trigger the workflows
 
 1. Push your latest commit to `main`
 2. Create a GitHub Release:
@@ -322,11 +372,22 @@ In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Sec
 3. GitHub will:
    - Trigger the workflow
    - Build the package using UV
-   - Upload it to PyPI automatically!
+   - Upload it to PyPI and Conda automatically!
+4. Go to the Actions tab → Watch the "Publish to PyPI" and “Conda Package Build” job run
 
-#### Step 3 - Add Conda auto-recipe 
+#### Step 4 - Optional: Upload to Anaconda Cloud
 
-If you're using Grayskull, you can automate Conda packaging with GitHub Actions. 
+You can extend the workflow to upload your Conda package to Anaconda.org by adding:
+
+```{sh}
+      - name: Upload to Anaconda Cloud
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_TOKEN }}
+        run: |
+          anaconda -t $ANACONDA_API_TOKEN upload --user <your-conda-username> $(conda build package_publishing_example/ --output)
+```
+
+Replace `<your-conda-username>` and make sure you’ve added ANACONDA_API_TOKEN in your repo’s GitHub → Settings → Secrets.
 
 ### 3.3 Publishing code with a DOI via Zenodo 
 
