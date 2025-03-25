@@ -195,7 +195,10 @@ Objectives of this assignment
 - [ ] Be aware that submission to Bioconda requires further preparation.
 
 In this second assignment we will work on automatically generating a conda recipe from a PyPI package, using Grayskull.
-To publish a Bioconda package is neccessary to set a GitHub repository and a conda recipe, the latter outlines the steps needed to build a package from source code.
+
+> [!NOTE]
+> To publish a Bioconda package is neccessary to set a GitHub repository and a conda recipe, the latter outlines the steps needed to build a package from source code.
+> Also, this assignment will not work on Windows, as bioconda does not support Windows.
 
 
 ### Step 0
@@ -249,8 +252,7 @@ package:
   version: {{ version }}
 
 source:
--  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
-+  url: https://pypi.org/packages/source/{{ name }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
   sha256: dd5ffdb8db6e6f2ba05546f230abc53ee897497d4eb81a1808fbe6290a07bf6f
 
 build:
@@ -293,6 +295,10 @@ extra:
   recipe-maintainers:
     - AddYourGitHubIdHere
 ```
+
+> [!NOTE]
+> `uv-dynamic-versioning` is required for the package to be built, so it will crash in the next step.
+> This can only be solved in two ways: 1) remove the dependency of `uv-dynamic-versioning` from the pyproject.toml file or 2) add `uv-dynamic-versioning` to the conda-forge channel.
 
 ### Step 5
 
