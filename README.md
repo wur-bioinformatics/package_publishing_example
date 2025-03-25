@@ -1,5 +1,10 @@
 # package_publishing_example
 [![PyPI version](https://badge.fury.io/py/package-publishing-example.svg)](https://pypi.org/project/package-publishing-example/)
+
+
+[![DOI](https://zenodo.org/badge/951219694.svg)](https://doi.org/10.5281/zenodo.15082110)
+
+
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wur-bioinformatics/package_publishing_example/blob/main/example.ipynb)
 
 

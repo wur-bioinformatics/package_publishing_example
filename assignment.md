@@ -103,12 +103,7 @@ $ uv run pytest --doctest-modules
 Note that we had to specify explicitly that we wanted pytest to run doctests. If you always want to do this, you can add the following lines to you `pyproject.toml`:
 
 ```{toml}
-[pytest]
-<<<<<<< HEAD
-addopts = "--doctest-modules"
-=======
 addopts = '--doctest-modules'
->>>>>>> dbf25e3 (pytest typo)
 ```
 
 This way pytest always runs with the doctest option enabled, so the command for running tests would simplify to `uv run pytest`. 
@@ -191,12 +186,21 @@ And that will be available as `cli` from the commandline once you've pip-install
 
 
 ## Assignment 2: Publishing a package to conda
+<<<<<<< HEAD
 Objectives of this assignment
 
 ✔️ Familiarize with conda recipes.  
 ✔️ Use Grayskull to generate a Bioconda recipe.  
 ✔️ Build and test the package locally.  
 ✔️ Be aware that submission to Bioconda requires further preparation.
+=======
+
+Objectives of this assignment
+- [ ] Familiarize with conda recipes.  
+- [ ] Use Grayskull to generate a Bioconda recipe.  
+- [ ] Build and test the package locally.  
+- [ ] Be aware that submission to Bioconda requires further preparation.
+>>>>>>> 4f80c29 (zenodo batch)
 
 In this second assignment we will work on automatically generating a conda recipe from a PyPI package, using Grayskull.
 To publish a Bioconda package is neccessary to set a GitHub repository and a conda recipe, the latter outlines the steps needed to build a package from source code.
