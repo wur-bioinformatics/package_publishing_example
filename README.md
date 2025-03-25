@@ -19,7 +19,7 @@ pip install package_publishing_example
 
 Testing it out
 ```{python}
->>> from python_packaging_example import revcomp
+>>> from package_publishing_example import revcomp
 >>> revcomp('ACGTA')
 'TACGT'
 ```
