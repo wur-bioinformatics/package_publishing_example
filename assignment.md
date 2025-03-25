@@ -14,7 +14,7 @@ Commandline:
 ```{sh}
 $ mkdir new_project
 $ cd new_project
-$ git init 
+$ git init
 ```
 
 Github:
@@ -54,7 +54,7 @@ You can come up with something yourself, or past the below code in `src/new_proj
 
 def add(number1: int | float, number2: int | float) -> int:
     """
-    Integer addition, if floats are provided they will be first 
+    Integer addition, if floats are provided they will be first
     converted to integers by rounding down
 
     Examples:
@@ -63,11 +63,11 @@ def add(number1: int | float, number2: int | float) -> int:
 
         >>> add(2.3, 4.5)
         6
-  
+
     Args:
         number1 (int | float): first number for addition
         number2 (int | float): second number for addition
-  
+
     Returns:
         int: sum of (possibly rounded down) inputs
     """
@@ -107,7 +107,7 @@ Note that we had to specify explicitly that we wanted pytest to run doctests. If
 addopts = '--doctest-modules'
 ```
 
-This way pytest always runs with the doctest option enabled, so the command for running tests would simplify to `uv run pytest`. 
+This way pytest always runs with the doctest option enabled, so the command for running tests would simplify to `uv run pytest`.
 
 ### Step 6
 
@@ -135,11 +135,11 @@ This creates a few files in the folder `dist`, which can be used to publish to p
 Publishing to pypi.
 
 All that is left to publish your codebase to pypi is making sure you have a pypi account, and [creating an access token](https://pypi.org/manage/account/token/).
-The first time you publish a project you'll need an access token with full account access, after that you can also use project-specific tokens. 
+The first time you publish a project you'll need an access token with full account access, after that you can also use project-specific tokens.
 
 Make sure you copy and save your token somewhere once you've created it!
 
-To publish to pypi, run the following code. Enter `__token__` as username, and the *actual token* as password. 
+To publish to pypi, run the following code. Enter `__token__` as username, and the *actual token* as password.
 
 ```{sh}
 uv publish
@@ -186,12 +186,12 @@ uv run cli --help
 And that will be available as `cli` from the commandline once you've pip-installed the published package!
 
 
-## Assignment 2: Publishing a package to conda
+## Assignment 2: Publishing a package to bioconda
 
 Objectives of this assignment
-- [ ] Familiarize with conda recipes.  
-- [ ] Use Grayskull to generate a Bioconda recipe.  
-- [ ] Build and test the package locally.  
+- [ ] Familiarize with conda recipes.
+- [ ] Use Grayskull to generate a Bioconda recipe.
+- [ ] Build and test the package locally.
 - [ ] Be aware that submission to Bioconda requires further preparation.
 
 In this second assignment we will work on automatically generating a conda recipe from a PyPI package, using Grayskull.
@@ -199,50 +199,48 @@ To publish a Bioconda package is neccessary to set a GitHub repository and a con
 
 
 ### Step 0
-
-We will use an existing Python project from GitHub, if successfully completed the repository and the pypi package was set up on the first assignment of the workshop.
+We will use an existing Python project from GitHub, if successfully completed the repository and the PyPi package was set up on the first assignment of the workshop.
 
 ### Step 1
-Install [Grayskull](https://github.com/conda/grayskull)
+Install [Grayskull](https://github.com/conda/grayskull) and [bioconda-utils](https://github.com/bioconda/bioconda-utils).
 
-
-
-```python
-pip install grayskull
+```bash
+mamba create -n bioconda bioconda-utils grayskull
+conda activate bioconda
 ```
 
 ### Step 2
+In order to add the recipe to bioconda later, we will fork and clone the bioconda-recipes repository.
+Go to the [bioconda-recipes](https://github.com/bioconda/bioconda-recipes) repository and click on the fork button in the top right corner.
+Clone the forked repository to your local machine:
 
-Run Gray skull to automatically generate a conda recipe from a python package.
-
-
-```python
-grayskull pypi new_project
-```
-
-
-```python
-grayskull pypi package_publishing_example 
-```
-
-This command will create a new folder called 'new_project'. Inside, you will find the meta.yaml file, containing the metadata neccessary to create a conda package.
-
-If it works you should see this message once grayskull is done:
-#### Recipe generated on /home/username/package_publishing_example for package_publishing_example ###
-
-```python
-new_project/
-├── meta.yaml #Main recipe file, contains the build, test information
+```bash
+git clone https://github.com/AddYourGitHubIdHere/bioconda-recipes.git
+cd bioconda-recipes/
 ```
 
 ### Step 3
+Run Grayskull to automatically generate a conda recipe from a PyPi package.
 
-After automatically generating the conda recipe you can edit the meta.yaml file. If you did not use Grayskull, you will need to manually write the script. 
+```bash
+cd recipes/
+grayskull pypi package_publishing_example
+```
 
-For the example Pypi package named "package_publishing_example", the following meta.yaml is generated by Grayskull:
+This command will create a new folder called 'package_publishing_example'.
+Inside, you will find the meta.yaml file, containing the metadata neccessary to create a conda package.
 
+If it works you should see this message once grayskull is done:
+`#### Recipe generated on /home/username/package_publishing_example for package_publishing_example ###`
 
-```python
+### Step 4
+
+After automatically generating the conda recipe you can edit the meta.yaml file.
+If you did not use Grayskull, you will need to manually write the script.
+Some of the lines in the meta.yaml generated by Grayskull are placeholders, though, and some others required by bioconda are missing.
+Here is an example of a meta.yaml file for the package_publishing_example package with the changes compared to the one generated by Grayskull highlighted:
+
+```diff
 {% set name = "package_publishing_example" %}
 {% set version = "0.0.4" %}
 
@@ -251,7 +249,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/package_publishing_example-{{ version }}.tar.gz
++  url: https://pypi.org/packages/source/{{ name }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
   sha256: dd5ffdb8db6e6f2ba05546f230abc53ee897497d4eb81a1808fbe6290a07bf6f
 
 build:
@@ -260,19 +258,21 @@ build:
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   number: 0
++  run_exports:
++    - {{ pin_subpackage('package_publishing_example', max_pin="x.x") }}
 
 requirements:
   host:
     - python >=3.10
     - hatchling
-    - uv-dynamic-versioning
+-    - uv-dynamic-versioning
     - pip
   run:
     - python >=3.10
     - pytest >=8.3.5
     - ruff >=0.11.0
     - typer >=0.15.2
-    - uv-dynamic-versioning >=0.6.0
+-    - uv-dynamic-versioning >=0.6.0
 
 test:
   imports:
@@ -284,78 +284,56 @@ test:
     - pip
 
 about:
-  home: 
   summary: Add your description here
   license: MIT
-  license_file: LICENSE
+-  license_file: LICENSE
 
 extra:
   recipe-maintainers:
     - AddYourGitHubIdHere
 ```
 
-
-
-### Step 4
-
-When building a Bioconda package, conda-build reads the metadata or the conda recipe and creates a conda package containing all the files in the build environment and the specified build dependencies. If recipe includes tests it also tests the new conda package. 
-
-
-```python
-conda install -y conda-build
-```
-
 ### Step 5
-We will now build the package locally, for this we will use conda build, , run this command from the root folder (of your username). [Conda build](https://conda.org/blog/2023-05-18-how-to-use-conda-build/)
 
+When building a Bioconda package, bioconda-utils reads the metadata of the conda recipe and creates a conda package containing all the files in the build environment and the specified dependencies.
+It validates the build by running the tests.
+We will now build the package locally, for this we will use bioconda-utils, run this command from the root folder of your bioconda-recipes fork.
 
-
-```python
-conda build new_project
+```bash
+cd /path/to/bioconda-recipes
+bioconda-utils build --packages package_publishing_example
 ```
 
-If build was successful, Conda will generate a package file in the conda-bld directory. To locate this file, you can use this command from the terminal:
-
-
-```python
-conda build new_project --output
-```
-
-???? THIS STEP IS NOT WORKING. I get this message:
-```
-Could not solve for environment specs
-The following package could not be installed
-└─ uv-dynamic-versioning =* * does not exist (perhaps a typo or a missing channel).
-```
+If build was successful, conda will generate a package file in the conda-bld directory.
+To locate this file, you can use this command from the terminal:
 
 ### Step 6
 
-Once the package has been built, you can test it. Create a conda environmet and install your built package.
+Once the package has been built, you can test it. Create a conda environment and install your built package.
 
-
-```python
-conda create -n test_environment
-conda activate test_env
-conda install --use-local new_project
-conda activate test_environment
-new_project --help
+```bash
+mamba create -n test_package_publishing_example --use-local test_package_publishing_example
+conda activate test_package_publishing_example
+test_package_publishing_example --help
 ```
 
-If it was successfully built and tested, the package is ready for submission to Bioconda. Importantly, the packages that are published in Bioconda are strictly reviewed before is accepted.
+### Step 7 (do NOT do in this workshop)
 
-### Step 7 (Do not run it in this workshop)
+If it was successfully built and tested, the package is ready for submission to Bioconda.
+Importantly, the packages that are published in Bioconda are strictly reviewed before is accepted.
 
-Finally, once you have build a conda package ideally you will submit a request to pubish your package. This step cannot be performed for the example python package created in this workshop, however is still explained with the purpose of showing the publishing process.
+In the bioconda-recipes directory, commit the changes to a new branch and push it to your fork:
 
-To upload your package to [Anaconda](https://anaconda.org/):
-
-
-```python
-anaconda upload /path/to/my_package-1.0-0.tar.bz2
+```bash
+git checkout -b add_package_publishing_example
+git add recipes/package_publishing_example
+git commit -m "Add package_publishing_example"
+git push -u origin add_package_publishing_example
 ```
 
-Using Grayskull and conda-build to create and manage a pypi package simplifies and automatizes the process of distribution and installation. 
-
+Then, go to your forked repository on GitHub and create a new pull request to the bioconda-recipes repository.
+The automated tests will run and once these pass successfully, you may label the pull request by commenting "@BiocondaBot please add label".
+After this has been done, the Bioconda team will review the package and merge it into the main repository.
 
 
 
@@ -363,11 +341,11 @@ Using Grayskull and conda-build to create and manage a pypi package simplifies a
 
 ## Assignment 3: Release Automation, Versioning & Sharing: Best Practices with GitHub
 
-### 3.1 Consistent versioning via UV dynamic versioning 
+### 3.1 Consistent versioning via UV dynamic versioning
 
-#### Step 1 - Add a version to your project 
+#### Step 1 - Add a version to your project
 
-Update your `pyproject.toml` with this or confirm it is already present: 
+Update your `pyproject.toml` with this or confirm it is already present:
 
 ```{sh}
 [tool.uv-dynamic-versioning]
@@ -375,7 +353,7 @@ vcs = "git"
 style = "semver"
 ```
 
-#### Step 2 – Make a release  
+#### Step 2 – Make a release
 
 To produce a clean, PyPI-compatible version (e.g. `0.1.0`) for publishing, you need to tag the current commit:
 
@@ -392,22 +370,22 @@ git describe --tags --exact-match
 
 If this returns v0.1.0, you're good to go. If it returns nothing, you're not on the tagged commit (you may need to re-tag or checkout the correct one).
 
-#### Step 3 – Build again 
+#### Step 3 – Build again
 
 ```{sh}
 uv build
 ```
 
-If you have had previous build attempts, make sure to remove previous build files with `rm -rf dist/` and then rebuild. 
+If you have had previous build attempts, make sure to remove previous build files with `rm -rf dist/` and then rebuild.
 
 After building, the generated wheel in `dist/` will have a clean version: `new_project-0.1.0-py3-none-any.whl`
 
-#### Step 4 - Publish on pypi 
+#### Step 4 - Publish on pypi
 
-Run: 
+Run:
 
 ```{sh}
-uv publish 
+uv publish
 ```
 
 When prompted:
@@ -417,14 +395,14 @@ When prompted:
 
 Visit: `https://pypi.org/project/<your-package-name>` or for this example project at: https://pypi.org/project/package-publishing-example/
 
-You can now install the latest version of your package with: 
+You can now install the latest version of your package with:
 
 ```{sh}
 pip install <your-package-name>==0.1.0
 ```
 
 
-### 3.2 Release-driven packaging to trigger pypi/conda package builds 
+### 3.2 Release-driven packaging to trigger pypi/conda package builds
 
 #### Step 1 - Add a GitHub Actions workflow for PyPI publishing
 
@@ -483,7 +461,7 @@ If you're using API tokens instead, you can modify the last step:
 
 In that case, remember to add your PYPI_API_TOKEN in GitHub → Settings → Secrets and variables → Actions.
 
-#### Step 2 - Add Conda packaging workflow  
+#### Step 2 - Add Conda packaging workflow
 
 If you're using Grayskull, you can automate Conda packaging with GitHub Actions. This workflow reuses the `meta.yaml` file you generated with Grayskull.
 
@@ -561,7 +539,7 @@ You can extend the workflow to upload your Conda package to Anaconda.org by addi
 
 Replace `<your-conda-username>` and make sure you’ve added ANACONDA_API_TOKEN in your repo’s GitHub → Settings → Secrets.
 
-### 3.3 Publishing code with a DOI via Zenodo 
+### 3.3 Publishing code with a DOI via Zenodo
 
 In this assignment, you will make your code citable by linking your GitHub repository to Zenodo, which will automatically archive your code and assign a DOI (Digital Object Identifier) every time you publish a GitHub release.
 
@@ -570,7 +548,7 @@ In this assignment, you will make your code citable by linking your GitHub repos
 1. Go to: https://zenodo.org/account/settings/github/
 2. Log in via GitHub
 2. Under "GitHub repositories", toggle ON your workshop repo
-3. Done! Now every GitHub release will be archived by Zenodo and a DOI will be assigned 
+3. Done! Now every GitHub release will be archived by Zenodo and a DOI will be assigned
 
 #### Step 2 – Make a release on GitHub
 
@@ -604,9 +582,9 @@ Once Zenodo finishes archiving (usually within a minute), go to your Zenodo reco
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
 ```
 
-### 3.4 Deploying and hosting your documentation on GitHub Pages 
+### 3.4 Deploying and hosting your documentation on GitHub Pages
 
-#### Step 1 - Create a `docs/` folder and a `README.md` 
+#### Step 1 - Create a `docs/` folder and a `README.md`
 
 Create a minimal structure for static Markdown-based documentation:
 
@@ -615,11 +593,11 @@ mkdir docs
 echo "# Welcome to My Project Docs" > docs/index.md
 ```
 
-Alternatively, use a tool like `mkdocs` or `sphinx` for nicer styling. 
+Alternatively, use a tool like `mkdocs` or `sphinx` for nicer styling.
 
 #### Step 2 – Add a GitHub Actions workflow to deploy docs
 
-Create the workflow file: `.github/workflows/docs.yml`: 
+Create the workflow file: `.github/workflows/docs.yml`:
 
 ```{sh}
 name: Deploy Docs
@@ -650,15 +628,15 @@ This workflow will upload and deploy the contents of docs/ every time you push t
 Go to Settings → Pages, choose the workflow, and save.
 
 Your documentation should now be published at
-`https://<username>.github.io/<repository>/`. 
+`https://<username>.github.io/<repository>/`.
 
 Check the documentation for this repository at: https://wur-bioinformatics.github.io/package_publishing_example/
 
-## Assignment 4: Miscellaneous tips and tricks with github 
+## Assignment 4: Miscellaneous tips and tricks with github
 
 ### github action for CI/CD
 In this assignment we will set up a github action workflow for continuous integration and continuous deployment (CI/CD) of a python package. The workflow will run tests on every push to the main branch, and publish a new version to the github container registry (GHCR) on every new version tag.
-#### step 1 
+#### step 1
 Setting up a github action workflow. If the `.github/workflows` Directory does not exist, create it:
 ```{sh}
 mkdir -p .github/workflows
