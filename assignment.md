@@ -313,18 +313,11 @@ bioconda-utils build --packages package_publishing_example
 
 ### Step 6
 
-If build was successful, conda will generate a package file in the conda-bld directory.
-To locate this file, you can use this command from the terminal:
-
-```bash
-TODO
-```
-
-Once the package has been built, you can test it.
+If build was successful, you can test it.
 Create a conda environment and install your built package.
 
 ```bash
-mamba create -n test_package_publishing_example --use-local test_package_publishing_example
+mamba create -n test_package_publishing_example --use-local package_publishing_example
 conda activate test_package_publishing_example
 test_package_publishing_example --help
 ```
