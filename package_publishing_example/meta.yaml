@@ -15,19 +15,19 @@ build:
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   number: 0
+  run_exports:
+    - {{ pin_subpackage('package_publishing_example', max_pin="x.x") }}
 
 requirements:
   host:
     - python >=3.10
     - hatchling
-    - uv-dynamic-versioning
     - pip
   run:
     - python >=3.10
     - pytest >=8.3.5
     - ruff >=0.11.0
     - typer >=0.15.2
-    - uv-dynamic-versioning >=0.6.0
 
 test:
   imports:
@@ -41,7 +41,6 @@ test:
 about:
   summary: Add your description here
   license: MIT
-  license_file: LICENSE
 
 extra:
   recipe-maintainers:
